@@ -1,0 +1,50 @@
+REAP(1)                     General Commands Manual                    REAP(1)
+
+NAME
+     reap – run process until all its spawned processes are dead
+
+SYNOPSIS
+     reap [-vw] command line ...
+
+DESCRIPTION
+     The reap utility executes the given command line and ensures all spawned
+     processes are dead before it exits.
+
+     By default, it will start slaying the spawned processes when the main
+     process exits.  When the option -w is given, reap will instead wait for
+     the processes to terminate.
+
+     Upon receiving SIGINT or SIGTERM, reap will start slaying all children
+     immediately.
+
+     The options are as follows:
+
+     -w      Wait for all spawned processes to finish.
+
+     -v      Verbose mode, report what reap is doing.
+
+EXIT STATUS
+     The reap utility exits with the exit status of the spawned command.
+
+     On fatal errors, exit codes 111 is returned.
+
+ASSUMPTIONS
+     reap uses the PR_SET_CHILD_SUBREAPER feature of Linux.  Slaying the
+     children only works when the kernel configuration CONFIG_PROC_CHILDREN is
+     enabled.
+
+     reap can only work reliably when it has permission to kill all spawned
+     processes and they respect SIGTERM.
+
+AUTHORS
+     Leah Neukirchen <leah@vuxu.org>
+
+LICENSE
+     reap is in the public domain.
+
+     To the extent possible under law, the creator of this work has waived all
+     copyright and related or neighboring rights to this work.
+
+     http://creativecommons.org/publicdomain/zero/1.0/
+
+Void Linux                      August 13, 2019                     Void Linux

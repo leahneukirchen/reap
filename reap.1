@@ -1,0 +1,72 @@
+.Dd August 13, 2019
+.Dt REAP 1
+.Os
+.Sh NAME
+.Nm reap
+.Nd run process until all its spawned processes are dead
+.Sh SYNOPSIS
+.Nm
+.Op Fl vw
+.Ar command\ line ...
+.Sh DESCRIPTION
+The
+.Nm
+utility executes the given command line and ensures
+all spawned processes are dead before it exits.
+.Pp
+By default, it will start slaying the spawned processes
+when the main process exits.
+When the option
+.Fl w
+is given,
+.Nm
+will instead wait for the processes to terminate.
+.Pp
+Upon receiving
+.Dv SIGINT
+or
+.Dv SIGTERM ,
+.Nm
+will start slaying all children immediately.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl w
+Wait for all spawned processes to finish.
+.It Fl v
+Verbose mode, report what
+.Nm
+is doing.
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits with the exit status of the spawned command.
+.Pp
+On fatal errors, exit codes 111 is returned.
+.Sh ASSUMPTIONS
+.Nm
+uses the
+.Dv PR_SET_CHILD_SUBREAPER
+feature of Linux.
+Slaying the children only works when
+the kernel configuration
+.Dv CONFIG_PROC_CHILDREN
+is enabled.
+.Pp
+.Nm
+can only work reliably when it has permission to kill all spawned
+processes and they respect
+.Dv SIGTERM .
+.Sh AUTHORS
+.An Leah Neukirchen Aq Mt leah@vuxu.org
+.Sh LICENSE
+.Nm
+is in the public domain.
+.Pp
+To the extent possible under law,
+the creator of this work
+has waived all copyright and related or
+neighboring rights to this work.
+.Pp
+.Lk http://creativecommons.org/publicdomain/zero/1.0/
