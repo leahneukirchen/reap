@@ -121,7 +121,7 @@ main(int argc, char *argv[]) {
 		write(pipefd[1], &err, 1);
                 _exit(111);
 	} else if (pid < 0) {  // fork failed
-		fprintf(stderr, "reap: exec %s: %s\n", argv[1], strerror(errno));
+		fprintf(stderr, "reap: exec %s: %s\n", argv[optind], strerror(errno));
                 exit(111);
 	}
 
@@ -131,7 +131,7 @@ main(int argc, char *argv[]) {
 	int n = read(pipefd[0], &err, 1);
 
 	if (n >= 0 && err) {
-		fprintf(stderr, "reap: exec %s: %s\n", argv[1], strerror(err));
+		fprintf(stderr, "reap: exec %s: %s\n", argv[optind], strerror(err));
 		exit(111);
 	}
 
