@@ -26,7 +26,9 @@ sig_atomic_t do_reap;
 int do_wait;
 int verbose;
 
-#define V(...) do { if (verbose) fprintf(stderr, "reap: " __VA_ARGS__); } while(0)
+#define E(str, ...) do { fprintf(stderr, "reap: " str ": %s\n", ## __VA_ARGS__, strerror(errno)); } while (0)
+#define F(str, ...) do { E(str, ## __VA_ARGS__); exit(111); } while (0)
+#define V(...) do { if (verbose) fprintf(stderr, "reap: " __VA_ARGS__); } while (0)
 
 // TERM/INT -> always reap
 // EXIT -> reap (default) or wait
@@ -49,9 +51,7 @@ reap_children()
 	    (long)getpid(), (long)getpid());
 	FILE *file = fopen(buf, "r");
 	if (!file) {
-		fprintf(stderr,
-		    "reap: could not open %s: %s\n",
-		    buf, strerror(errno));
+		E("could not open %s", buf);
 		return 0;
 	}
 
@@ -64,8 +64,7 @@ reap_children()
 			if (kill(pid, SIGTERM) == 0)
 				didsth = 1;
 			else {
-				fprintf(stderr, "reap: kill %ld: %s\n",
-				    (long)pid, strerror(errno));
+				E("kill %ld", (long)pid);
 			}
 
 			pid = 0;
@@ -100,11 +99,8 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0) {
-		fprintf(stderr,
-		    "reap: failed to become subreaper: %s\n", strerror(errno));
-		exit(111);
-	}
+	if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0)
+		F("failed to become subreaper");
 
 	sigaction(SIGINT,  &(struct sigaction){.sa_handler=turn_sharp}, 0);
 	sigaction(SIGTERM, &(struct sigaction){.sa_handler=turn_sharp}, 0);
@@ -122,8 +118,7 @@ main(int argc, char *argv[]) {
 		write(pipefd[1], &err, 1);
                 _exit(111);
 	} else if (pid < 0) {  // fork failed
-		fprintf(stderr, "reap: exec %s: %s\n", argv[optind], strerror(errno));
-                exit(111);
+		F("exec %s", argv[optind]);
 	}
 
 	close(pipefd[1]);
@@ -132,8 +127,8 @@ main(int argc, char *argv[]) {
 	int n = read(pipefd[0], &err, 1);
 
 	if (n >= 0 && err) {
-		fprintf(stderr, "reap: exec %s: %s\n", argv[optind], strerror(err));
-		exit(111);
+		errno = err;
+		F("exec %s", argv[optind]);
 	}
 
 	V("spawned child %ld\n", (long)pid);
@@ -147,12 +142,8 @@ main(int argc, char *argv[]) {
 				break;
 			else if (errno == EINTR)
 				/* check do_reap below */;
-			else {
-				fprintf(stderr,
-				    "reap: waitpid %s: %s\n", argv[1],
-				    strerror(errno));
-				exit(111);
-			}
+			else
+				F("waitpid");
 		} else if (desc == pid) {
 			exitcode = WEXITSTATUS(wstatus);
 			V("reaped child %ld [status %d]\n", (long)desc, exitcode);
