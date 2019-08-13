@@ -6,12 +6,16 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+
+#define _GNU_SOURCE
+
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -106,15 +110,29 @@ main(int argc, char *argv[]) {
 
 	pid_t pid, desc;
 
+	int pipefd[2];
+	pipe2(pipefd, O_CLOEXEC);
+
 	pid = fork();
 	if (pid == 0) {  // in child
+		close(pipefd[0]);
 		execvp(argv[optind], argv+optind);
-
-                fprintf(stderr, "reap: exec %s: %s\n", argv[1], strerror(errno));
-                exit(111);
+		char err = errno;
+		write(pipefd[1], &err, 1);
+                _exit(111);
 	} else if (pid < 0) {  // fork failed
 		fprintf(stderr, "reap: exec %s: %s\n", argv[1], strerror(errno));
                 exit(111);
+	}
+
+	close(pipefd[1]);
+
+	char err = 0;
+	int n = read(pipefd[0], &err, 1);
+
+	if (n >= 0 && err) {
+		fprintf(stderr, "reap: exec %s: %s\n", argv[1], strerror(err));
+		exit(111);
 	}
 
 	if (verbose)
