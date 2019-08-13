@@ -26,6 +26,8 @@ sig_atomic_t do_reap;
 int do_wait;
 int verbose;
 
+#define V(...) do { if (verbose) fprintf(stderr, "reap: " __VA_ARGS__); } while(0)
+
 // TERM/INT -> always reap
 // EXIT -> reap (default) or wait
 
@@ -58,8 +60,7 @@ reap_children()
 	pid_t pid = 0;
 	while ((c = getc(file)) != EOF) {
 		if (c == ' ') {
-			if (verbose)
-				fprintf(stderr, "reap: killing %ld\n", (long)pid);
+			V("killing %ld\n", (long)pid);
 			if (kill(pid, SIGTERM) == 0)
 				didsth = 1;
 			else {
@@ -135,8 +136,7 @@ main(int argc, char *argv[]) {
 		exit(111);
 	}
 
-	if (verbose)
-		fprintf(stderr, "reap: spawned child %ld\n", (long)pid);
+	V("spawned child %ld\n", (long)pid);
 
 	int wstatus;
 	int exitcode = 111;
@@ -155,14 +155,11 @@ main(int argc, char *argv[]) {
 			}
 		} else if (desc == pid) {
 			exitcode = WEXITSTATUS(wstatus);
-			if (verbose)
-				fprintf(stderr,
-				    "reap: reaped child %ld [status %d]\n",
-				    (long)desc, exitcode);
+			V("reaped child %ld [status %d]\n", (long)desc, exitcode);
 			if (!do_wait)
 				do_reap = 1;
-		} else if (verbose) {
-			fprintf(stderr, "reap: reaped descendant %ld\n", (long)desc);
+		} else {
+			V("reaped descendant %ld\n", (long)desc);
 		}
 
 		if (do_reap)
@@ -170,8 +167,7 @@ main(int argc, char *argv[]) {
 				break;
 	}
 
-	if (verbose)
-		fprintf(stderr, "reap: exiting [status %d]\n", exitcode);
+	V("exiting [status %d]\n", exitcode);
 
 	exit(exitcode);
 }
