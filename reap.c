@@ -27,6 +27,7 @@ sig_atomic_t do_wait;
 void
 turn_sharp(int sig)
 {
+	(void)sig;
 	do_reap = 1;
 }
 
