@@ -6,7 +6,6 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-
 #define _GNU_SOURCE
 
 #include <sys/prctl.h>
@@ -22,7 +21,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-sig_atomic_t do_reap;
+sig_atomic_t do_slay;
 int do_wait;
 int verbose;
 
@@ -34,17 +33,17 @@ int verbose;
 // EXIT -> reap (default) or wait
 
 void
-turn_sharp(int sig)
+start_slaying(int sig)
 {
 	(void)sig;
-	do_reap = 1;
+	do_slay = 1;
 }
 
 // needs CONFIG_PROC_CHILDREN=y (since Linux 4.2), most modern distros have this
 // enabled.
 // the alternatives are terrible (enumerating all pids or scanning /proc)
 int
-reap_children()
+slay_children()
 {
 	char buf[128];
 	snprintf(buf, 128, "/proc/%ld/task/%ld/children",
@@ -102,8 +101,8 @@ main(int argc, char *argv[]) {
 	if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0)
 		F("failed to become subreaper");
 
-	sigaction(SIGINT,  &(struct sigaction){.sa_handler=turn_sharp}, 0);
-	sigaction(SIGTERM, &(struct sigaction){.sa_handler=turn_sharp}, 0);
+	sigaction(SIGINT,  &(struct sigaction){.sa_handler=start_slaying}, 0);
+	sigaction(SIGTERM, &(struct sigaction){.sa_handler=start_slaying}, 0);
 
 	pid_t pid, desc;
 
@@ -142,20 +141,20 @@ main(int argc, char *argv[]) {
 			if (errno == ECHILD)
 				break;
 			else if (errno == EINTR)
-				/* check do_reap below */;
+				/* check do_slay below */;
 			else
 				F("waitpid");
 		} else if (desc == pid) {
 			exitcode = WEXITSTATUS(wstatus);
 			V("reaped child %ld [status %d]\n", (long)desc, exitcode);
 			if (!do_wait)
-				do_reap = 1;
+				do_slay = 1;
 		} else {
 			V("reaped descendant %ld\n", (long)desc);
 		}
 
-		if (do_reap)
-			if (!reap_children())
+		if (do_slay)
+			if (!slay_children())
 				break;
 	}
 
