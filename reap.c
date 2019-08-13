@@ -108,7 +108,8 @@ main(int argc, char *argv[]) {
 	pid_t pid, desc;
 
 	int pipefd[2];
-	pipe2(pipefd, O_CLOEXEC);
+	if (pipe2(pipefd, O_CLOEXEC) < 0)
+		F("pipe2");
 
 	pid = fork();
 	if (pid == 0) {  // in child
