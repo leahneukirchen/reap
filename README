@@ -36,6 +36,14 @@ ASSUMPTIONS
      reap can only work reliably when it has permission to kill all spawned
      processes and they respect SIGTERM.
 
+RATIONALE
+     Keeping track of all spawned process is traditionally a hard problem on
+     Unix systems, mainly due to daemonization by forking twice.
+
+     Other approaches on Linux exist, such as cgroups or PID namespaces.  The
+     approach taken by reap has the benefit of requiring no special
+     permissions.
+
 AUTHORS
      Leah Neukirchen <leah@vuxu.org>
 
