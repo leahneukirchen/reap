@@ -19,7 +19,8 @@
 #include <signal.h>
 
 sig_atomic_t do_reap;
-sig_atomic_t do_wait;
+int do_wait;
+int verbose;
 
 // TERM/INT -> always reap
 // EXIT -> reap (default) or wait
@@ -53,8 +54,15 @@ reap_children()
 	pid_t pid = 0;
 	while ((c = getc(file)) != EOF) {
 		if (c == ' ') {
+			if (verbose)
+				fprintf(stderr, "reap: killing %ld\n", (long)pid);
 			if (kill(pid, SIGTERM) == 0)
 				didsth = 1;
+			else {
+				fprintf(stderr, "reap: kill %ld: %s\n",
+				    (long)pid, strerror(errno));
+			}
+
 			pid = 0;
 		} else if (isdigit(c)) {
 			pid = (pid * 10) + (c - '0');
@@ -73,13 +81,15 @@ int
 main(int argc, char *argv[]) {
 
 	int c;
-        while ((c = getopt(argc, argv, "+w")) != -1) {
+        while ((c = getopt(argc, argv, "+vw")) != -1) {
 		switch (c) {
 		case 'w': do_wait = 1; break;
+		case 'v': verbose = 1; break;
 		default:
                         fprintf(stderr,
-"Usage: %s [-w] COMMAND...\n"
-"\t-w\twait for main command to finish (default: start reaping)\n",
+"Usage: %s [-wv] COMMAND...\n"
+"\t-w\twait for main command to finish (default: start reaping)\n"
+"\t-v\tverbose\n",
                             argv[0]);
                         exit(1);
 		}
@@ -107,6 +117,9 @@ main(int argc, char *argv[]) {
                 exit(111);
 	}
 
+	if (verbose)
+		fprintf(stderr, "reap: spawned child %ld\n", (long)pid);
+
 	int wstatus;
 	int exitcode = 111;
 
@@ -124,14 +137,23 @@ main(int argc, char *argv[]) {
 			}
 		} else if (desc == pid) {
 			exitcode = WEXITSTATUS(wstatus);
+			if (verbose)
+				fprintf(stderr,
+				    "reap: reaped child %ld [status %d]\n",
+				    (long)desc, exitcode);
 			if (!do_wait)
 				do_reap = 1;
+		} else if (verbose) {
+			fprintf(stderr, "reap: reaped descendant %ld\n", (long)desc);
 		}
 
 		if (do_reap)
 			if (!reap_children())
 				break;
 	}
+
+	if (verbose)
+		fprintf(stderr, "reap: exiting [status %d]\n", exitcode);
 
 	exit(exitcode);
 }
