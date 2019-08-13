@@ -36,6 +36,8 @@ void
 start_slaying(int sig)
 {
 	(void)sig;
+	if (verbose)
+		write(2, "reap: slaying\n", 14);  // async safe
 	do_slay = 1;
 }
 
@@ -147,8 +149,10 @@ main(int argc, char *argv[]) {
 		} else if (desc == pid) {
 			exitcode = WEXITSTATUS(wstatus);
 			V("reaped child %ld [status %d]\n", (long)desc, exitcode);
-			if (!do_wait)
+			if (!do_wait) {
+				V("slaying\n");
 				do_slay = 1;
+			}
 		} else {
 			V("reaped descendant %ld\n", (long)desc);
 		}
