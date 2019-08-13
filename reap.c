@@ -117,7 +117,7 @@ main(int argc, char *argv[]) {
 	if (pid == 0) {  // in child
 		close(pipefd[0]);
 		execvp(argv[optind], argv+optind);
-		char err = errno;
+		unsigned char err = errno;
 		write(pipefd[1], &err, 1);
                 _exit(111);
 	} else if (pid < 0) {  // fork failed
@@ -127,7 +127,7 @@ main(int argc, char *argv[]) {
 
 	close(pipefd[1]);
 
-	char err = 0;
+	unsigned char err = 0;
 	int n = read(pipefd[0], &err, 1);
 
 	if (n >= 0 && err) {
