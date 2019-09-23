@@ -1,4 +1,4 @@
-.Dd August 13, 2019
+.Dd September 23, 2019
 .Dt REAP 1
 .Os
 .Sh NAME
@@ -6,7 +6,7 @@
 .Nd run process until all its spawned processes are dead
 .Sh SYNOPSIS
 .Nm
-.Op Fl vw
+.Op Fl vwx
 .Ar command\ line ...
 .Sh DESCRIPTION
 The
@@ -31,12 +31,15 @@ will start slaying all children immediately.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl w
-Wait for all spawned processes to finish.
 .It Fl v
 Verbose mode, report what
 .Nm
 is doing.
+.It Fl w
+Wait for all spawned processes to finish.
+.It Fl x
+Forbid execution of binaries we cannot kill (using
+.Dv PR_SET_NO_NEW_PRIVS ) .
 .El
 .Sh EXIT STATUS
 The
@@ -57,7 +60,8 @@ is enabled.
 .Nm
 can only work reliably when it has permission to kill all spawned
 processes and they respect
-.Dv SIGTERM .
+.Dv SIGTERM
+.Pq see also Fl x .
 .Sh RATIONALE
 Keeping track of all spawned process is traditionally a hard problem
 on Unix systems, mainly due to daemonization by forking twice.

@@ -4,7 +4,7 @@ NAME
      reap – run process until all its spawned processes are dead
 
 SYNOPSIS
-     reap [-vw] command line ...
+     reap [-vwx] command line ...
 
 DESCRIPTION
      The reap utility executes the given command line and ensures all spawned
@@ -19,9 +19,12 @@ DESCRIPTION
 
      The options are as follows:
 
+     -v      Verbose mode, report what reap is doing.
+
      -w      Wait for all spawned processes to finish.
 
-     -v      Verbose mode, report what reap is doing.
+     -x      Forbid execution of binaries we cannot kill (using
+             PR_SET_NO_NEW_PRIVS).
 
 EXIT STATUS
      The reap utility exits with the exit status of the spawned command.
@@ -34,7 +37,7 @@ ASSUMPTIONS
      enabled.
 
      reap can only work reliably when it has permission to kill all spawned
-     processes and they respect SIGTERM.
+     processes and they respect SIGTERM (see also -x).
 
 RATIONALE
      Keeping track of all spawned process is traditionally a hard problem on
@@ -55,4 +58,4 @@ LICENSE
 
      http://creativecommons.org/publicdomain/zero/1.0/
 
-Void Linux                      August 13, 2019                     Void Linux
+Void Linux                    September 23, 2019                    Void Linux

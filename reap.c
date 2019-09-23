@@ -24,6 +24,7 @@
 sig_atomic_t do_slay;
 int do_wait;
 int verbose;
+int no_new_privs;
 
 #define E(str, ...) do { fprintf(stderr, "reap: " str ": %s\n", ## __VA_ARGS__, strerror(errno)); } while (0)
 #define F(str, ...) do { E(str, ## __VA_ARGS__); exit(111); } while (0)
@@ -86,15 +87,17 @@ int
 main(int argc, char *argv[]) {
 
 	int c;
-        while ((c = getopt(argc, argv, "+vw")) != -1) {
+        while ((c = getopt(argc, argv, "+vwx")) != -1) {
 		switch (c) {
-		case 'w': do_wait = 1; break;
 		case 'v': verbose = 1; break;
+		case 'w': do_wait = 1; break;
+		case 'x': no_new_privs = 1; break;
 		default:
                         fprintf(stderr,
-"Usage: %s [-wv] COMMAND...\n"
+"Usage: %s [-vwx] COMMAND...\n"
+"\t-v\tverbose\n"
 "\t-w\twait for main command to finish (default: start reaping)\n"
-"\t-v\tverbose\n",
+"\t-x\tforbid execution of binaries we cannot kill\n",
                             argv[0]);
                         exit(1);
 		}
@@ -115,6 +118,9 @@ main(int argc, char *argv[]) {
 	pid = fork();
 	if (pid == 0) {  // in child
 		close(pipefd[0]);
+		if (no_new_privs)
+			if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0)
+				F("failed to SET_NO_NEW_PRIVS");
 		execvp(argv[optind], argv+optind);
 		unsigned char err = errno;
 		write(pipefd[1], &err, 1);
