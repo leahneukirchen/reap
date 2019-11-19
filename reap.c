@@ -96,7 +96,7 @@ main(int argc, char *argv[]) {
                         fprintf(stderr,
 "Usage: %s [-vwx] COMMAND...\n"
 "\t-v\tverbose\n"
-"\t-w\twait for main command to finish (default: start reaping)\n"
+"\t-w\twait for all spaned processes to finish (default: start reaping)\n"
 "\t-x\tforbid execution of binaries we cannot kill\n",
                             argv[0]);
                         exit(1);
