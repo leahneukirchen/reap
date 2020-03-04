@@ -45,7 +45,7 @@ start_slaying(int sig)
 // needs CONFIG_PROC_CHILDREN=y (since Linux 4.2), most modern distros have this
 // enabled.
 // the alternatives are terrible (enumerating all pids or scanning /proc)
-int
+void
 slay_children()
 {
 	char buf[128];
@@ -54,20 +54,16 @@ slay_children()
 	FILE *file = fopen(buf, "r");
 	if (!file) {
 		E("could not open %s", buf);
-		return 0;
+		return;
 	}
 
 	int c;
-	int didsth = 0;
 	pid_t pid = 0;
 	while ((c = getc(file)) != EOF) {
 		if (c == ' ') {
 			V("killing %ld\n", (long)pid);
-			if (kill(pid, SIGTERM) == 0)
-				didsth = 1;
-			else {
+			if (kill(pid, SIGTERM) != 0)
 				E("kill %ld", (long)pid);
-			}
 
 			pid = 0;
 		} else if (isdigit(c)) {
@@ -80,7 +76,6 @@ slay_children()
 	}
 
 	fclose(file);
-	return didsth;
 }
 
 int
@@ -164,8 +159,7 @@ main(int argc, char *argv[]) {
 		}
 
 		if (do_slay)
-			if (!slay_children())
-				break;
+			slay_children();
 	}
 
 	V("exiting [status %d]\n", exitcode);
