@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-sig_atomic_t do_slay;
+volatile sig_atomic_t do_slay;
 int do_wait;
 int verbose;
 int no_new_privs;
