@@ -37,9 +37,15 @@ void
 start_slaying(int sig)
 {
 	(void)sig;
+
+	int old_errno = errno;
+
 	if (verbose)
-		write(2, "reap: slaying\n", 14);  // async safe
+		write(2, "reap: slaying\n", 14);
+
 	do_slay = 1;
+
+	errno = old_errno;
 }
 
 // needs CONFIG_PROC_CHILDREN=y (since Linux 4.2), most modern distros have this
