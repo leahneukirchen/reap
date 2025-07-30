@@ -162,6 +162,7 @@ main(int argc, char *argv[]) {
 			}
 		} else {
 			V("reaped descendant %ld\n", (long)desc);
+			continue;
 		}
 
 		if (do_slay)
