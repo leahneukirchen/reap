@@ -111,6 +111,7 @@ main(int argc, char *argv[]) {
 		case 'w': do_wait = 1; break;
 		case 'x': no_new_privs = 1; break;
 		default:
+usage:
                         fprintf(stderr,
 "Usage: %s [-vwx] COMMAND...\n"
 "\t-v\tverbose\n"
@@ -120,6 +121,9 @@ main(int argc, char *argv[]) {
                         exit(1);
 		}
 	}
+
+        if (optind == argc)
+	        goto usage;
 
 #if defined(__linux__)
 	if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0)
