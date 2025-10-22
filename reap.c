@@ -150,8 +150,9 @@ usage:
 			if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0)
 				F("failed to SET_NO_NEW_PRIVS");
 #elif defined(__FreeBSD__)
-			errno = ENOSYS;
-			F("-x on FreeBSD");
+			if (procctl(P_PID, 0, PROC_NO_NEW_PRIVS_CTL,
+			    &(int){ PROC_NO_NEW_PRIVS_ENABLE }) != 0)
+				F("failed to set PROC_NO_NEW_PRIVS_ENABLE");
 #endif
 		}
 		execvp(argv[optind], argv+optind);
