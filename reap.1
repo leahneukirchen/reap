@@ -1,4 +1,4 @@
-.Dd September 23, 2019
+.Dd October 22, 2025
 .Dt REAP 1
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@ Wait for all spawned processes to finish.
 .It Fl x
 Forbid execution of binaries we cannot kill (using
 .Dv PR_SET_NO_NEW_PRIVS ) .
+.Pq Linux-only.
 .El
 .Sh EXIT STATUS
 The
@@ -48,10 +49,11 @@ utility exits with the exit status of the spawned command.
 .Pp
 On fatal errors, exit codes 111 is returned.
 .Sh ASSUMPTIONS
+On Linux,
 .Nm
 uses the
 .Dv PR_SET_CHILD_SUBREAPER
-feature of Linux.
+feature.
 Slaying the children only works when
 the kernel configuration
 .Dv CONFIG_PROC_CHILDREN
@@ -62,6 +64,13 @@ can only work reliably when it has permission to kill all spawned
 processes and they respect
 .Dv SIGTERM
 .Pq see also Fl x .
+.Pp
+On FreeBSD,
+.Nm
+uses
+.Dv PROC_REAP_ACQUIRE
+and
+.Dv PROC_REAP_KILL .
 .Sh RATIONALE
 Keeping track of all spawned process is traditionally a hard problem
 on Unix systems, mainly due to daemonization by forking twice.

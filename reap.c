@@ -8,7 +8,14 @@
 
 #define _GNU_SOURCE
 
+#if defined(__linux__)
 #include <sys/prctl.h>
+#elif defined(__FreeBSD__)
+#include <sys/procctl.h>
+#else
+#error OS not supported
+#endif
+
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -43,17 +50,21 @@ start_slaying(int sig)
 	if (verbose)
 		write(2, "reap: slaying\n", 14);
 
-	do_slay = 1;
+	do_slay++;
 
 	errno = old_errno;
 }
 
-// needs CONFIG_PROC_CHILDREN=y (since Linux 4.2), most modern distros have this
-// enabled.
-// the alternatives are terrible (enumerating all pids or scanning /proc)
 void
 slay_children()
 {
+	int sig = do_slay > 2 ? SIGKILL : SIGTERM;
+
+#if defined(__linux__)
+	// needs CONFIG_PROC_CHILDREN=y (since Linux 4.2), most modern distros
+	// have this enabled.
+	// the alternatives are terrible (enumerating all pids or scanning /proc)
+
 	char buf[128];
 	snprintf(buf, 128, "/proc/%ld/task/%ld/children",
 	    (long)getpid(), (long)getpid());
@@ -68,7 +79,7 @@ slay_children()
 	while ((c = getc(file)) != EOF) {
 		if (c == ' ') {
 			V("killing %ld\n", (long)pid);
-			if (kill(pid, SIGTERM) != 0)
+			if (kill(pid, sig) != 0)
 				E("kill %ld", (long)pid);
 
 			pid = 0;
@@ -82,7 +93,13 @@ slay_children()
 	}
 
 	fclose(file);
+#elif defined(__FreeBSD__)
+	struct procctl_reaper_kill req = { .rk_sig = sig };
+	if (procctl(P_PID, getpid(), PROC_REAP_KILL, &req) == 0)
+		V("killed %d processes\n", req.rk_killed);
+#endif
 }
+
 
 int
 main(int argc, char *argv[]) {
@@ -104,8 +121,13 @@ main(int argc, char *argv[]) {
 		}
 	}
 
+#if defined(__linux__)
 	if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0)
 		F("failed to become subreaper");
+#elif defined(__FreeBSD__)
+	if (procctl(P_PID, 0, PROC_REAP_ACQUIRE, 0) != 0)
+		F("failed to become subreaper");
+#endif
 
 	sigaction(SIGINT,  &(struct sigaction){.sa_handler=start_slaying}, 0);
 	sigaction(SIGTERM, &(struct sigaction){.sa_handler=start_slaying}, 0);
@@ -119,9 +141,15 @@ main(int argc, char *argv[]) {
 	pid = fork();
 	if (pid == 0) {  // in child
 		close(pipefd[0]);
-		if (no_new_privs)
+		if (no_new_privs) {
+#if defined(__linux__)
 			if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0)
 				F("failed to SET_NO_NEW_PRIVS");
+#elif defined(__FreeBSD__)
+			errno = ENOSYS;
+			F("-x on FreeBSD");
+#endif
+		}
 		execvp(argv[optind], argv+optind);
 		unsigned char err = errno;
 		write(pipefd[1], &err, 1);
