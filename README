@@ -24,7 +24,7 @@ DESCRIPTION
      -w      Wait for all spawned processes to finish.
 
      -x      Forbid execution of binaries we cannot kill (using
-             PR_SET_NO_NEW_PRIVS).
+             PR_SET_NO_NEW_PRIVS / PROC_NO_NEW_PRIVS_CTL).
 
 EXIT STATUS
      The reap utility exits with the exit status of the spawned command.
@@ -32,12 +32,14 @@ EXIT STATUS
      On fatal errors, exit codes 111 is returned.
 
 ASSUMPTIONS
-     reap uses the PR_SET_CHILD_SUBREAPER feature of Linux.  Slaying the
+     On Linux, reap uses the PR_SET_CHILD_SUBREAPER feature.  Slaying the
      children only works when the kernel configuration CONFIG_PROC_CHILDREN is
      enabled.
 
      reap can only work reliably when it has permission to kill all spawned
      processes and they respect SIGTERM (see also -x).
+
+     On FreeBSD, reap uses PROC_REAP_ACQUIRE and PROC_REAP_KILL.
 
 RATIONALE
      Keeping track of all spawned process is traditionally a hard problem on
@@ -58,4 +60,4 @@ LICENSE
 
      http://creativecommons.org/publicdomain/zero/1.0/
 
-Void Linux                    September 23, 2019                    Void Linux
+Void Linux                     October 22, 2025                     Void Linux
