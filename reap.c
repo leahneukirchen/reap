@@ -50,7 +50,11 @@ start_slaying(int sig)
 	if (verbose)
 		write(2, "reap: slaying\n", 14);
 
-	do_slay++;
+	if (sig == SIGTERM)
+		do_slay += 3;
+	else
+		do_slay++;
+
 
 	errno = old_errno;
 }
